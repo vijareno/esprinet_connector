@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Inherit Sale Order Form View -->
+        <record id="view_sale_order_form_esprinet" model="ir.ui.view">
+            <field name="name">sale.order.form.esprinet</field>
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale.view_order_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='payment_term_id']" position="after">
+                    <field name="esprinet_order_sent" readonly="1"/>
+                    <field name="esprinet_order_id" readonly="1" invisible="not esprinet_order_sent"/>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Inherit Sale Order Tree View -->
+        <record id="view_sale_order_tree_esprinet" model="ir.ui.view">
+            <field name="name">sale.order.tree.esprinet</field>
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale.view_quotation_tree"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='state']" position="after">
+                    <field name="esprinet_order_sent" optional="hide"/>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

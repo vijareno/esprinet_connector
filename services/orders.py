@@ -16,8 +16,31 @@ class EsprinetOrdersService(models.AbstractModel):
     def create_order(self, order_data, headers=None):
         """
         POST /orders
+        Enhanced version with better response handling for Odoo integration
         """
-        return self._make_request('POST', 'orders', json=order_data, headers=headers)
+        try:
+            response = self._make_request('POST', 'orders', json=order_data, headers=headers)
+            
+            # Handle successful response
+            if response and response.get('status') == 'success':
+                return {
+                    'success': True,
+                    'order_id': response.get('order_id') or response.get('id'),
+                    'response': response
+                }
+            else:
+                return {
+                    'success': False,
+                    'error': response.get('message', 'Unknown error from Esprinet API'),
+                    'response': response
+                }
+                
+        except Exception as e:
+            return {
+                'success': False,
+                'error': str(e),
+                'response': None
+            }
 
     def get_order(self, order_id, headers=None):
         """

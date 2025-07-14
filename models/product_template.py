@@ -54,10 +54,54 @@ class ProductTemplate(models.Model):
             product = self.search([('default_code', '=', sku)], limit=1)
             if product:
                 product.write(product_values)
+                # Ensure Esprinet is added as supplier if not already present
+                product._ensure_esprinet_supplier()
                 _logger.debug("Updated product with SKU %s", sku)
             else:
-                self.create(product_values)
+                product = self.create(product_values)
+                # Add Esprinet as supplier for new products
+                product._ensure_esprinet_supplier()
                 _logger.debug("Created product with SKU %s", sku)
             processed_count += 1
         
         _logger.info("Finished Esprinet products synchronization. Processed %d products.", processed_count)
+
+    def _is_esprinet_product(self):
+        """
+        Check if this product is supplied by Esprinet
+        Returns True if Esprinet is in the product's supplier list
+        """
+        esprinet_supplier = self.env['res.partner'].search([
+            ('ref', '=', 'ESPRINET_SUPPLIER')
+        ], limit=1)
+        
+        if not esprinet_supplier:
+            return False
+            
+        # Check if Esprinet is in the product's supplier info
+        return bool(self.seller_ids.filtered(lambda s: s.partner_id == esprinet_supplier))
+
+    def _ensure_esprinet_supplier(self):
+        """
+        Ensure that Esprinet is added as a supplier for this product
+        """
+        esprinet_supplier = self.env['res.partner'].search([
+            ('ref', '=', 'ESPRINET_SUPPLIER')
+        ], limit=1)
+        
+        if not esprinet_supplier:
+            _logger.warning("Esprinet supplier not found. Please ensure the supplier is properly configured.")
+            return
+            
+        # Check if Esprinet is already a supplier for this product
+        existing_supplier = self.seller_ids.filtered(lambda s: s.partner_id == esprinet_supplier)
+        
+        if not existing_supplier:
+            # Add Esprinet as a supplier
+            self.env['product.supplierinfo'].create({
+                'partner_id': esprinet_supplier.id,
+                'product_tmpl_id': self.id,
+                'min_qty': 1.0,
+                'delay': 1,  # Lead time in days
+            })
+            _logger.debug("Added Esprinet as supplier for product %s", self.name)
