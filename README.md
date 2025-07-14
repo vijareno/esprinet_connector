@@ -42,5 +42,5 @@ This module depends on the following Odoo modules:
 
 ## Author
 
-Your Name
-[https://www.yourcompany.com](https://www.yourcompany.com)
+Vicente Jareño Molina
+[https://www.virunode.es](https://www.virunode.es)
