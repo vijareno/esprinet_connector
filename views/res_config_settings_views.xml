@@ -1,0 +1,40 @@
+<odoo>
+    <data>
+        <record id="res_config_settings_view_form" model="ir.ui.view">
+            <field name="name">res.config.settings.view.form.inherit.esprinet</field>
+            <field name="model">res.config.settings</field>
+            <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//div[hasclass('settings')]" position="inside">
+                    <div class="app_settings_block" data-string="Esprinet" string="Esprinet" data-key="esprinet_connector">
+                        <h2>Esprinet Configuration</h2>
+                        <div class="row mt16 o_settings_container">
+                            <div class="col-12 col-lg-6 o_setting_box">
+                                <div class="o_setting_left_pane">
+                                    <field name="esprinet_username"/>
+                                </div>
+                                <div class="o_setting_right_pane">
+                                    <label for="esprinet_username"/>
+                                    <div class="text-muted">
+                                        Username for Esprinet webservices.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12 col-lg-6 o_setting_box">
+                                <div class="o_setting_left_pane">
+                                    <field name="esprinet_password" widget="password"/>
+                                </div>
+                                <div class="o_setting_right_pane">
+                                    <label for="esprinet_password"/>
+                                    <div class="text-muted">
+                                        Password for Esprinet webservices.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>
