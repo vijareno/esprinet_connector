@@ -5,34 +5,54 @@
             <field name="model">res.config.settings</field>
             <field name="inherit_id" ref="base.res_config_settings_view_form"/>
             <field name="arch" type="xml">
-                <xpath expr="//div[hasclass('settings')]" position="inside">
-                    <div class="app_settings_block" data-string="Esprinet" string="Esprinet" data-key="esprinet_connector">
-                        <h2>Esprinet Configuration</h2>
-                        <div class="row mt16 o_settings_container">
-                            <div class="col-12 col-lg-6 o_setting_box">
-                                <div class="o_setting_left_pane">
-                                    <field name="esprinet_username"/>
-                                </div>
-                                <div class="o_setting_right_pane">
-                                    <label for="esprinet_username"/>
-                                    <div class="text-muted">
-                                        Username for Esprinet webservices.
+                <xpath expr="//form" position="inside">
+                    <app data-string="Esprinet" string="Esprinet" name="esprinet_connector">
+                        <block title="API Configuration" name="esprinet_api_config">
+                            <setting string="Esprinet API Credentials" help="Configure your Esprinet API credentials">
+                                <div class="content-group">
+                                    <div class="row mt16">
+                                        <label for="esprinet_username" class="col-lg-3 o_light_label" string="API Username"/>
+                                        <field name="esprinet_username" class="col-lg-9"/>
+                                    </div>
+                                    <div class="row">
+                                        <label for="esprinet_password" class="col-lg-3 o_light_label" string="API Password"/>
+                                        <field name="esprinet_password" widget="password" class="col-lg-9"/>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="col-12 col-lg-6 o_setting_box">
-                                <div class="o_setting_left_pane">
-                                    <field name="esprinet_password" widget="password"/>
-                                </div>
-                                <div class="o_setting_right_pane">
-                                    <label for="esprinet_password"/>
-                                    <div class="text-muted">
-                                        Password for Esprinet webservices.
+                            </setting>
+                        </block>
+                        <block title="FTP Configuration" name="esprinet_ftp_config">
+                            <setting string="FTP Catalogue Access" help="Configure FTP access for downloading product catalogue">
+                                <div class="content-group">
+                                    <div class="row mt16">
+                                        <label for="esprinet_ftp_host" class="col-lg-3 o_light_label" string="FTP Host"/>
+                                        <field name="esprinet_ftp_host" class="col-lg-9" placeholder="ftp.esprinet.com"/>
+                                    </div>
+                                    <div class="row">
+                                        <label for="esprinet_ftp_username" class="col-lg-3 o_light_label" string="FTP Username"/>
+                                        <field name="esprinet_ftp_username" class="col-lg-9"/>
+                                    </div>
+                                    <div class="row">
+                                        <label for="esprinet_ftp_password" class="col-lg-3 o_light_label" string="FTP Password"/>
+                                        <field name="esprinet_ftp_password" widget="password" class="col-lg-9"/>
+                                    </div>
+                                    <div class="row">
+                                        <label for="esprinet_ftp_path" class="col-lg-3 o_light_label" string="Catalogue Path"/>
+                                        <field name="esprinet_ftp_path" class="col-lg-9" placeholder="/catalogue/Catalogue.json"/>
+                                    </div>
+                                    <div class="row mt16">
+                                        <div class="col-lg-12">
+                                            <button name="action_download_catalogue" string="Download Catalogue Now" type="object" class="btn btn-primary"/>
+                                            <div class="text-muted mt8">
+                                                Download and process the latest product catalogue from FTP server.
+                                                This process may take several minutes for large files.
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
+                            </setting>
+                        </block>
+                    </app>
                 </xpath>
             </field>
         </record>

@@ -11,5 +11,18 @@
             <field name="numbercall">-1</field>
             <field name="doall" eval="False"/>
         </record>
+        
+        <record id="ir_cron_download_esprinet_catalogue" model="ir.cron">
+            <field name="name">Esprinet: Download Catalogue</field>
+            <field name="model_id" ref="base.model_base"/>
+            <field name="state">code</field>
+            <field name="code">env['esprinet.catalogue.service'].download_and_process_catalogue()</field>
+            <field name="user_id" ref="base.user_root"/>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="numbercall">-1</field>
+            <field name="doall" eval="False"/>
+            <field name="active" eval="False"/>
+        </record>
     </data>
 </odoo>

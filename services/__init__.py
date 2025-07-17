@@ -9,4 +9,5 @@ from . import customer_quotations
 from . import customer_depot
 from . import cloud
 from . import cashandcarries
+from . import catalogue
 

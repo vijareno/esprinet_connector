@@ -39,8 +39,12 @@ This module streamlines the entire procurement and sales process for Esprinet pr
 reducing manual work and ensuring data consistency between systems.
     """,
     'author': 'Vicente Jareño Molina',
+    'license': 'Other proprietary',
     'website': 'https://www.virunode.es',
     'depends': ['base', 'product', 'purchase', 'sale'],
+    'external_dependencies': {
+        'python': ['ftplib'],
+    },
     'data': [
         'security/ir.model.access.csv',
         'views/res_config_settings_views.xml',

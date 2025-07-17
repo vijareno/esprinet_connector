@@ -12,6 +12,8 @@ This comprehensive module enables full integration with Esprinet's webservices, 
 
 #### Product Management
 - **Automated Product Synchronization**: Scheduled synchronization of products from Esprinet catalog
+- **FTP Catalogue Download**: Download complete product catalogue from Esprinet FTP server
+- **Large File Processing**: Efficient streaming processing of large catalogue files (200MB+)
 - **Real-time Updates**: Automatic updates of product information including prices, stock levels, and descriptions
 - **Supplier Association**: Automatic linking of synchronized products to Esprinet as supplier
 - **New Product Creation**: Automatic creation of products that don't exist in your Odoo catalog
@@ -51,7 +53,11 @@ This comprehensive module enables full integration with Esprinet's webservices, 
 2. Enter your Esprinet API credentials:
    - **Username**: Your Esprinet B2B username
    - **Password**: Your Esprinet B2B password
-3. Configure synchronization preferences if needed.
+3. Configure FTP access for catalogue download:
+   - **FTP Host**: Esprinet FTP server hostname
+   - **FTP Username**: Your FTP username
+   - **FTP Password**: Your FTP password
+   - **Catalogue Path**: Path to Catalogue.json file (e.g., /catalogue/Catalogue.json)
 4. Save the configuration.
 
 ### Verification
@@ -67,9 +73,11 @@ After configuration, verify the setup by:
 
 #### Product Synchronization
 - **Scheduled Sync**: Products are automatically synchronized every 2 hours via cron job
+- **FTP Catalogue Download**: Complete catalogue is downloaded daily from FTP server
 - **New Products**: Products not existing in Odoo are automatically created
 - **Updates**: Existing products are updated with latest information from Esprinet
 - **Supplier Linking**: All synchronized products are automatically linked to Esprinet supplier
+- **Large File Handling**: Efficient processing of large catalogue files using streaming JSON parsing
 
 #### Order Processing
 - **Automatic Detection**: When confirming a sales order, the system automatically detects Esprinet products
@@ -83,6 +91,11 @@ After configuration, verify the setup by:
 You can trigger product synchronization manually from:
 - Configuration screen: `Settings > General Settings > Esprinet Connector`
 - Developer mode: `Settings > Technical > Automation > Scheduled Actions`
+
+#### FTP Catalogue Download
+- **Manual Download**: Use the "Download Catalogue Now" button in configuration
+- **Scheduled Download**: Enable the daily catalogue download cron job
+- **Progress Monitoring**: Check system logs for download and processing progress
 
 #### Order Management
 - View Esprinet order status in sales order forms
