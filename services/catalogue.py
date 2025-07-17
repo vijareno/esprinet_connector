@@ -218,12 +218,23 @@ class EsprinetCatalogueService(models.AbstractModel):
                 ('barcode', '=', barcode)
             ], limit=1)
             
+            # Obtener margen de venta desde la configuración
+            margin = 10.0
+            try:
+                margin = float(self.env['ir.config_parameter'].sudo().get_param('esprinet_connector.sale_margin', default=0.0))
+            except Exception:
+                margin = 10.0
+
+            cost = float(supplier_price) if supplier_price else 0.0
+            list_price = cost * (1 + margin / 100.0)
+            volume = (float(product_data.get('Depth')) * float(product_data.get('Length')) * float(product_data.get('Height'))) / 100
             product_vals = {
                 'name': name or f'Product {sku}',
                 'default_code': sku,
                 'barcode': barcode,
-                'standard_price': float(supplier_price) if supplier_price else 0.0,
-                'list_price': float(price) if price else 0.0,
+                'standard_price': cost,
+                'list_price': list_price,
+                'volume': volume,
                 'type': 'consu',
                 'purchase_ok': True,
                 'sale_ok': True,
@@ -247,10 +258,8 @@ class EsprinetCatalogueService(models.AbstractModel):
             
             if description:
                 product_vals['description'] = description
-                
-            # Add vendor/brand information
-            vendor_name = product_data.get('VendorName')
-            brand_description = product_data.get('BrandDescription')
+                product_vals['description_sale'] = description
+                product_vals['description_purchase'] = description
             
             # Add additional fields that might be useful
             if product_data.get('PartNumber'):
@@ -258,29 +267,111 @@ class EsprinetCatalogueService(models.AbstractModel):
                 if product_data.get('PartNumber') != sku:
                     product_vals['default_code'] = product_data.get('PartNumber')
             
-            # Add stock information if available
-            stock_qty = product_data.get('StockQty')
-            if stock_qty is not None:
-                try:
-                    # Note: This might need to be handled separately in stock management
-                    pass  # We'll handle stock updates in a separate method if needed
-                except (ValueError, TypeError):
-                    pass
+            tax_supplier_id = self._get_or_create_tax(product_data.get('VatRate'), type='purchase')
+            tax_sale_id = self._get_or_create_tax(product_data.get('VatRate'), type='sale')
+            # Forzar actualización de impuestos en productos existentes
+            product_vals['supplier_taxes_id'] = [(6, 0, [tax_supplier_id])] if tax_supplier_id else [(6, 0, [])]
+            product_vals['taxes_id'] = [(6, 0, [tax_sale_id])] if tax_sale_id else [(6, 0, [])]
 
+            # Guardar producto y actualizar stock
             if existing_product:
-                # Update existing product
                 existing_product.write(product_vals)
                 self._update_supplier_info(existing_product, supplier, price)
-                return 'updated'
+                product = existing_product
+                result = 'updated'
             else:
-                # Create new product
                 new_product = self.env['product.product'].create(product_vals)
                 self._update_supplier_info(new_product, supplier, price)
-                return 'created'
+                product = new_product
+                result = 'created'
+
+            # Add stock information if available
+            stock_qty = product_data.get('StockQty')
+            # if stock_qty is not None:
+                # self._set_stock_quant(sku, product, stock_qty)
+
+            return result
                 
         except Exception as e:
             _logger.error("Error in _process_single_product: %s", str(e))
             return 'error'
+
+    def _set_stock_quant(self, sku, product, stock_qty):
+        try:
+            warehouse = self.env['stock.warehouse'].search([('company_id', '=', self.env.company.id)], limit=1)
+            if warehouse:
+                location = warehouse.lot_stock_id
+                quant = self.env['stock.quant'].with_context(inventory_mode=True).search([
+                    ('product_id', '=', product.id),
+                    ('location_id', '=', location.id)
+                ], limit=1)
+                if quant:
+                    quant.inventory_quantity = float(stock_qty)
+                    quant._set_inventory_quantity()
+                else:
+                    self.env['stock.quant'].with_context(inventory_mode=True).create({
+                        'product_id': product.id,
+                        'location_id': location.id,
+                        'inventory_quantity': float(stock_qty),
+                    })._set_inventory_quantity()
+        except Exception as e:
+            _logger.error("Error updating stock for product %s: %s", sku, str(e))
+        
+    def _search_tax_id(self, amount, type='purchase'):
+        """Search for tax ID based on amount"""
+        try:
+            tax = self.env['account.tax'].search([
+                ('amount', '=', amount),
+                ('type_tax_use', '=', type)
+            ], limit=1)
+            if not tax:
+                _logger.warning("No tax found for amount: %s", amount)
+                return False
+            return tax.id
+        except Exception as e:
+            _logger.error("Error searching tax ID: %s", str(e))
+            return False
+
+    def _create_supplier_tax(self, amount):
+        """Create a new supplier tax record"""
+        try:
+            tax = self.env['account.tax'].create({
+                'name': f"{amount} %",
+                'amount': float(amount),
+                'amount_type': 'percent',
+                'type_tax_use': 'purchase',
+            })
+            _logger.info("Created new tax: %s", tax.name)
+            return tax.id
+        except Exception as e:
+            _logger.error("Error creating supplier tax: %s", str(e))
+            return False
+
+    def _create_sale_tax(self, amount):
+        """Create a new sale tax record"""
+        try:
+            tax = self.env['account.tax'].create({
+                'name': f"{amount} %",
+                'amount': float(amount),
+                'amount_type': 'percent',
+                'type_tax_use': 'sale',
+                'company_id': self.env.company.id,
+            })
+            _logger.info("Created new tax: %s", tax.name)
+            return tax.id
+        except Exception as e:
+            _logger.error("Error creating sale tax: %s", str(e))
+            return False
+
+    def _get_or_create_tax(self, amount, type='purchase'):
+        """Get or create a tax based on amount and type"""
+        tax_id = self._search_tax_id(amount, type)
+        if not tax_id:
+            if type == 'purchase':
+                tax_id = self._create_supplier_tax(amount)
+            else:
+                tax_id = self._create_sale_tax(amount)
+        return tax_id if tax_id else False
 
     def _update_supplier_info(self, product, supplier, price):
         """Update or create supplier info for the product"""
