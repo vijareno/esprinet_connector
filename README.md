@@ -146,6 +146,7 @@ This module requires the following Odoo modules:
 - `product` - Product management
 - `purchase` - Supplier management
 - `sale` - Sales order processing
+- `stock` - Inventory and stock management
 
 ## API Integration
 

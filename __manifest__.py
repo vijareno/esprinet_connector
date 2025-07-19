@@ -41,7 +41,7 @@ reducing manual work and ensuring data consistency between systems.
     'author': 'Vicente Jareño Molina',
     'license': 'Other proprietary',
     'website': 'https://www.virunode.es',
-    'depends': ['base', 'product', 'purchase', 'sale'],
+    'depends': ['base', 'product', 'purchase', 'sale', 'stock'],
     'external_dependencies': {
         'python': ['ftplib'],
     },
@@ -49,6 +49,7 @@ reducing manual work and ensuring data consistency between systems.
         'security/ir.model.access.csv',
         'views/res_config_settings_views.xml',
         'views/sale_order_views.xml',
+        'views/product_views.xml',
         'data/cron.xml',
         'data/res_partner_data.xml',
     ],

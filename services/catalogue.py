@@ -227,7 +227,7 @@ class EsprinetCatalogueService(models.AbstractModel):
 
             cost = float(supplier_price) if supplier_price else 0.0
             list_price = cost * (1 + margin / 100.0)
-            volume = (float(product_data.get('Depth')) * float(product_data.get('Length')) * float(product_data.get('Height'))) / 100
+            volume = (float(product_data.get('Depth')) * float(product_data.get('Length')) * float(product_data.get('Height'))) / 1000
             product_vals = {
                 'name': name or f'Product {sku}',
                 'default_code': sku,
@@ -235,7 +235,7 @@ class EsprinetCatalogueService(models.AbstractModel):
                 'standard_price': cost,
                 'list_price': list_price,
                 'volume': volume,
-                'type': 'consu',
+                'type': 'product',
                 'purchase_ok': True,
                 'sale_ok': True,
             }
@@ -273,12 +273,11 @@ class EsprinetCatalogueService(models.AbstractModel):
             product_vals['supplier_taxes_id'] = [(6, 0, [tax_supplier_id])] if tax_supplier_id else [(6, 0, [])]
             product_vals['taxes_id'] = [(6, 0, [tax_sale_id])] if tax_sale_id else [(6, 0, [])]
 
-            # Guardar producto y actualizar stock
             if existing_product:
-                existing_product.write(product_vals)
-                self._update_supplier_info(existing_product, supplier, price)
+                # existing_product.write(product_vals)
+                # self._update_supplier_info(existing_product, supplier, price)
                 product = existing_product
-                result = 'updated'
+                result = 'skipped'
             else:
                 new_product = self.env['product.product'].create(product_vals)
                 self._update_supplier_info(new_product, supplier, price)
@@ -286,10 +285,11 @@ class EsprinetCatalogueService(models.AbstractModel):
                 result = 'created'
 
             # Add stock information if available
-            stock_qty = product_data.get('StockQty')
-            # if stock_qty is not None:
-                # self._set_stock_quant(sku, product, stock_qty)
-
+            stock_qty = product_data.get('StockQty', 0.0)
+            self._set_stock_quant(sku, product, stock_qty)
+            product.sudo().supplier_stock_qty = float(stock_qty)
+            product.sudo().display_supplier_stock_in_website = True
+            
             return result
                 
         except Exception as e:
@@ -299,21 +299,29 @@ class EsprinetCatalogueService(models.AbstractModel):
     def _set_stock_quant(self, sku, product, stock_qty):
         try:
             warehouse = self.env['stock.warehouse'].search([('company_id', '=', self.env.company.id)], limit=1)
-            if warehouse:
-                location = warehouse.lot_stock_id
-                quant = self.env['stock.quant'].with_context(inventory_mode=True).search([
-                    ('product_id', '=', product.id),
-                    ('location_id', '=', location.id)
-                ], limit=1)
-                if quant:
-                    quant.inventory_quantity = float(stock_qty)
-                    quant._set_inventory_quantity()
-                else:
-                    self.env['stock.quant'].with_context(inventory_mode=True).create({
-                        'product_id': product.id,
-                        'location_id': location.id,
-                        'inventory_quantity': float(stock_qty),
-                    })._set_inventory_quantity()
+            if not warehouse:
+                _logger.warning("No stock.warehouse found for company_id %s. Cannot update stock for product %s.", self.env.company.id, sku)
+                return
+            location = warehouse.lot_stock_id
+            quant = self.env['stock.quant'].with_context(inventory_mode=True).search([
+                ('product_id', '=', product.id),
+                ('location_id', '=', location.id)
+            ], limit=1)
+            if quant:
+                _logger.debug(
+                    "Actualizando quant para producto %s (ID: %s, type: %s, detailed_type: %s, company_id: %s) en almacén %s (ID: %s)",
+                    sku, product.id, getattr(product, 'type', None), getattr(product, 'detailed_type', None), getattr(product, 'company_id', None), warehouse.name, warehouse.id
+                )
+                quant.inventory_quantity = float(stock_qty)
+                quant._set_inventory_quantity()
+            else:
+                new_quant = self.env['stock.quant'].with_context(inventory_mode=True).create({
+                    'product_id': product.id,
+                    'location_id': location.id,
+                    'inventory_quantity': float(stock_qty),
+                })
+                new_quant._set_inventory_quantity()
+
         except Exception as e:
             _logger.error("Error updating stock for product %s: %s", sku, str(e))
         
