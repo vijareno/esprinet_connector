@@ -11,6 +11,10 @@
                             <setting string="Credenciales de la API de Esprinet" help="Configura tus credenciales de API de Esprinet">
                                 <div class="content-group">
                                     <div class="row mt16">
+                                        <label for="esprinet_url_api" class="col-lg-3 o_light_label" string="URL de la API"/>
+                                        <field name="esprinet_url_api" class="col-lg-9" placeholder="https://ws-uat.esprinet.com/b2b/api/v2.0"/>
+                                    </div>
+                                    <div class="row mt16">
                                         <label for="esprinet_username" class="col-lg-3 o_light_label" string="Usuario API"/>
                                         <field name="esprinet_username" class="col-lg-9"/>
                                     </div>

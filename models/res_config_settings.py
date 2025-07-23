@@ -5,6 +5,9 @@ from odoo import models, fields, api
 class ResConfigSettings(models.TransientModel):
     _inherit = 'res.config.settings'
 
+    esprinet_url_api = fields.Char(string="URL API Esprinet", config_parameter='esprinet_connector.url_api',
+        default='https://ws-uat.esprinet.com/b2b/api/v2.0',
+        help="URL base de la API de Esprinet. Por defecto es https://ws-uat.esprinet.com/b2b/api/v2.0")
     esprinet_username = fields.Char(string='Usuario', config_parameter='esprinet_connector.username')
     esprinet_password = fields.Char(string='Contraseña', config_parameter='esprinet_connector.password')
 
@@ -12,7 +15,7 @@ class ResConfigSettings(models.TransientModel):
     esprinet_ftp_host = fields.Char(string='Host FTP', config_parameter='esprinet_connector.ftp_host')
     esprinet_ftp_username = fields.Char(string='Usuario FTP', config_parameter='esprinet_connector.ftp_username')
     esprinet_ftp_password = fields.Char(string='Contraseña FTP', config_parameter='esprinet_connector.ftp_password')
-    esprinet_ftp_path = fields.Char(string='Ruta del archivo de catálogo', config_parameter='esprinet_connector.ftp_path', 
+    esprinet_ftp_path = fields.Char(string='Ruta del archivo de catálogo', config_parameter='esprinet_connector.ftp_path',
                                    help='Ruta al archivo Catalogue.json en el servidor FTP (por ejemplo, Catalogue.json)')
 
     # Margen de venta
@@ -42,7 +45,7 @@ class ResConfigSettings(models.TransientModel):
             esprinet_sale_margin=float(self.env['ir.config_parameter'].sudo().get_param('esprinet_connector.sale_margin', default=0.0)),
         )
         return res
-    
+
     def action_download_catalogue(self):
         """Manual action to download and process catalogue"""
         try:

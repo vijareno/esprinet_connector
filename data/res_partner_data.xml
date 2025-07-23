@@ -6,6 +6,7 @@
             <field name="is_company" eval="True"/>
             <field name="supplier_rank">1</field>
             <field name="ref">ESPRINET_SUPPLIER</field>
+            <field name="lang">es_ES</field>
         </record>
     </data>
 </odoo>
