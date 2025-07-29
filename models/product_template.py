@@ -63,7 +63,7 @@ class ProductTemplate(models.Model):
 
         margin = self.env['ir.config_parameter'].sudo().get_param(
             'esprinet_connector.margin',
-            default=10.0
+            default=25.0
         )
         processed_count = 0
         # product: product.template
@@ -89,6 +89,8 @@ class ProductTemplate(models.Model):
                 product.write(product_values)
                 continue
             standard_price = pricing_data.get('sellPrice', 0.0)
+            fees = pricing_data.get('fees', 0.0)
+            standard_price = float(standard_price) + float(fees)
             if standard_price <= 0:
                 _logger.warning("El precio estándar para el producto con SKU %s es inválido: %s", sku, standard_price)
                 product.write(product_values)
@@ -107,16 +109,14 @@ class ProductTemplate(models.Model):
                 _logger.warning("No se pudo obtener la información de disponibilidad para el producto con SKU %s", sku)
                 product.write(product_values)
                 continue
-            stock_qty = availability_data.get('stockQty', 0.0)
-            if stock_qty < 0:
-                _logger.warning("La cantidad de stock para el producto con SKU %s es inválida: %s", sku, stock_qty)
-                product.write(product_values)
-                continue
+            stock_qty = availability_data.get('stock', 0.0)
             if stock_qty != product.supplier_stock_qty:
                 product_values['stock_qty'] = stock_qty
 
-            if not product_values:
+            if product_values:
                 product.write(product_values)
+                if product_values['standard_price']:
+                    self._update_product_supplier_info(product_values['standard_price'])
                 _logger.debug("Actualizado el producto con SKU %s", sku)
                 processed_count += 1
 
@@ -158,9 +158,32 @@ class ProductTemplate(models.Model):
                 'partner_id': esprinet_supplier.id,
                 'product_tmpl_id': self.id,
                 'min_qty': 1.0,
-                'delay': 1,  # Lead time in days
+                'delay': 2,
             })
             _logger.debug("Added Esprinet as supplier for product %s", self.name)
+
+    def _update_product_supplier_info(self, price):
+        """
+        Update the supplier information for this product
+        """
+        try:
+            existing_supplierinfo = self.env['product.supplierinfo'].search(
+                [
+                    ('product_tmpl_id', '=', self.id),
+                ],
+                limit=1,
+            )
+
+            supplierinfo_vals = {
+                'price': float(price) if price else 0.0,
+            }
+
+            if existing_supplierinfo:
+                existing_supplierinfo.write(supplierinfo_vals)
+
+        except Exception as e:
+            _logger.error("Error updating supplier info: %s", str(e))
+            raise
 
     def get_firsts_products_write(self, limit=100):
         """
