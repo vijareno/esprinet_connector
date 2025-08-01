@@ -111,13 +111,13 @@ class ProductTemplate(models.Model):
                 continue
             stock_qty = availability_data.get('stock', 0.0)
             if stock_qty != product.supplier_stock_qty:
-                product_values['stock_qty'] = stock_qty
+                product_values['supplier_stock_qty'] = stock_qty
                 product_values['purchase_ok'] = True if stock_qty > 0 else False
                 product_values['sale_ok'] = True if stock_qty > 0 else False
 
             if product_values:
                 product.write(product_values)
-                if product_values['standard_price']:
+                if 'standard_price' in product_values and product_values['standard_price']:
                     self._update_product_supplier_info(product_values['standard_price'])
                 _logger.debug("Actualizado el producto con SKU %s", sku)
                 processed_count += 1
